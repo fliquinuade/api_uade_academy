@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 class CustomPagination(PageNumberPagination):
     #Cantidad de elementos dentro de cada pagina
-    page_size = 3
+    page_size = 20
     page_size_query_param = 'page_size'
     #Limite de elementos que el cliente puede solicitar
     #  por medio del parametro 'page_size'

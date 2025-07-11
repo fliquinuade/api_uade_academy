@@ -51,7 +51,7 @@ def api_info(request):
 class CursoAPIView(APIView):
 
     model = Curso
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     #Get hara referencia a poder gestionar peticiones HTTP del tipo GET
     @swagger_auto_schema(
