@@ -25,23 +25,23 @@ class CursoSerializer(serializers.ModelSerializer):
     #VALIDACIONES PERSONALIZADAS
     # se crean funciones con el prefijo validate_ seguido del nombre
     # del campo que quiero validar, recibe un parametro value
-    def validate_costo(self,value):
+    def validate_cost(self,value):
         if value < 0:
             #Lanzar una excepcion indicando el error que quiero controlar
             raise serializers.ValidationError('Validacion personalizada, el costo no puede ser negativo.')
         return value
 
     #VALIDACION VARIOS CAMPOS A MISMA VEZ
-    def validate(self,data):
-        """
-            data es un diccionario que contiene los campos y los valores que recibe
-        """
-        if data['modalidad']=='presencial' and data['cupo_maximo'] > 100:
-            raise serializers.ValidationError(
-                {'cupo_maximo':'El cupo máximo para cursos presenciales no puede ser mayor a 100'}
-            )
+    # def validate(self,data):
+    #     """
+    #         data es un diccionario que contiene los campos y los valores que recibe
+    #     """
+    #     if data['modalidad']=='presencial' and data['cupo_maximo'] > 100:
+    #         raise serializers.ValidationError(
+    #             {'cupo_maximo':'El cupo máximo para cursos presenciales no puede ser mayor a 100'}
+    #         )
 
-        return data
+    #     return data
 
 #Es posible definifir mas de un serializador para un mismo Modelo
 class CursoReadSerializer(serializers.ModelSerializer):
@@ -53,7 +53,7 @@ class CursoReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Curso
-        fields = ['nombre','nro_curso','modalidad','modulos','cupo_maximo','costo']
+        fields = ['id','name','image','level','modulos','description','start_date']
         #Profundidad de la serializacion teniendo en cuenta las relaciones
         #Recomendacion no usar depth > 1
         #depth = 1
@@ -62,4 +62,20 @@ class EstudianteSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Estudiante
-        fields = ['id','nombre','apellido','email']
+        fields = ['id','nombre','apellido','email','legajo','activo']
+
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    #classmethod se utiliza para definir un metodo que pertenece a la clase y
+    # no a la instancia se puede llamar sin crear una instancia de la clase
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Agregar claims personalizados
+        token['email'] = user.email
+        token['first_name'] = getattr(user, 'first_name', None)  # campo personalizado
+        token['is_staff'] = getattr(user, 'is_staff', None)  # campo personalizado    
+        return token

@@ -24,6 +24,16 @@ from utils.pagination import CustomPagination
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Response as OpenAPIResponse
 
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+
 # Create your views here.
 def inicio(request):
     mensaje = """<h1>AUDE ACADEMY</h1>"""
@@ -64,10 +74,9 @@ class CursoAPIView(APIView):
         Aqui debera indicarle a la base que tiene que hacer
         SELECT * FROM api_cursos WHERE ;        
         """
-        modalidad_param = request.query_params.get('modalidad',None)
-        nombre_param = request.query_params.get('nombre',None)
 
-        # cursos = Curso.objects.all()
+        cursos = Curso.objects.all()
+
         #cursos = Curso.objects.prefetch_related('modulos').all()
 
         # if modalidad_param and nombre_param:
@@ -99,16 +108,31 @@ class CursoAPIView(APIView):
         #many=True indica que estamos serializando una lista de objetos
 
         #Implementacion de paginacion
-        cursos = Curso.objects.all()
+        # cursos = Curso.objects.all()
         # paginator = PageNumberPagination()
         # paginator.page_size = 10 # Configura la cantidad de elementos por pagina
 
-        paginator = CustomPagination() #Mi paginación personalizada
-        paginated_queryset = paginator.paginate_queryset(cursos,request)
-        serializer = CursoReadSerializer(paginated_queryset, many=True)
+        # paginator = CustomPagination() #Mi paginación personalizada
+        # paginated_queryset = paginator.paginate_queryset(cursos,request)
+        # serializer = CursoReadSerializer(paginated_queryset, many=True)
 
-        #Devolver la lista serializada como una respusta JSON al cliente
-        return paginator.get_paginated_response(serializer.data)
+        # #Devolver la lista serializada como una respusta JSON al cliente
+        # return paginator.get_paginated_response(serializer.data)
+
+
+        level_param = request.query_params.get('level',None)
+        name_param = request.query_params.get('name',None)
+        filtros = Q()
+
+        if level_param:
+            filtros &= Q(level__iexact=level_param)
+        if name_param:
+            filtros &= Q(name__icontains=name_param)
+
+        cursos = Curso.objects.filter(filtros) if filtros else Curso.objects.all()
+        serializer = CursoReadSerializer(cursos, many = True)
+        return Response(serializer.data)
+    
     
     @swagger_auto_schema(
         operation_description="API para crear un nuevo curso",
@@ -143,7 +167,7 @@ class CursoAPIView(APIView):
                 'mensaje' : 'Curso creado exitosamente',
                 'datos': serializer.data
             }
-            return Response(respuesta, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         #Sino pasa la validación respondo con los errores dectados
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
@@ -177,9 +201,10 @@ class CursoDetalleAPIView(APIView):
         try:
             #SELECT * FROM Curso WHERE  primary_key=id_curso
             curso = Curso.objects.get(pk=id_curso)
+            serializer = CursoSerializer(curso)
             #DELETE FROM Curso WHERE primary_key=id_curso
             curso.delete()
-            return Response({'mensaje':'El Curso fue eliminado con exito.'},status=status.HTTP_200_OK)
+            return Response(serializer.data,status=status.HTTP_200_OK)
         except Curso.DoesNotExist:
             return Response({'error':'El curso no existente'},status=status.HTTP_404_NOT_FOUND)
         except RestrictedError:
@@ -211,7 +236,7 @@ class CursoDetalleAPIView(APIView):
                     'mensaje':'Curso Actualizado exitosamente.',
                     'data': serializer.data
                 }
-            return Response(respuesta) #por defecto el codigo de status es 200
+            return Response(serializer.data) #por defecto el codigo de status es 200
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -283,3 +308,42 @@ class ModuloDetalleAPIView(APIView):
                 }
             return Response(respuesta) #por defecto el codigo de status es 200
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+
+from rest_framework.viewsets import ModelViewSet
+from .serializers import EstudianteSerializer
+from .models import Estudiante
+from rest_framework.decorators import action
+
+class EstudianteViewSet(ModelViewSet):
+    #Especifico el serializador asociado
+    serializer_class = EstudianteSerializer
+    #Devolver todos los estudiantes
+    #queryset = Estudiante.objects.all()
+    queryset = Estudiante.objects.filter(activo=True)
+    #Agregar permisos
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        #obtengo el parametro quety llamado nombre
+        nombre = self.request.query_params.get('nombre',None)
+        if nombre:
+            return Estudiante.objects.filter(nombre__icontains=nombre)
+        return Estudiante.objects.all()
+
+    @action(detail=True, methods=['post'])
+    def inactivar(self,request,pk):
+        #Obtener el registro de un estudiante en base al id de la URL
+        estudiante = self.get_object()
+        estudiante.activo = False
+        estudiante.save()
+        return Response({'status':'Estudiante inactivo'})
+    
+    @action(detail=True, methods=['post'])
+    def activar(self,request,pk):
+        #Obtener el registro de un estudiante en base al id de la URL
+        estudiante = self.get_object()
+        estudiante.activo = True
+        estudiante.save()
+        return Response({'status':'Estudiante activo'})
+    

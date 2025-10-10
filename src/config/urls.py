@@ -21,6 +21,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from api.views import CustomTokenObtainPairView
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -37,9 +39,10 @@ urlpatterns = [
     path('documentacion_swagger/', schema_view.with_ui('swagger',cache_timeout=0)),
     path('redoc/',schema_view.with_ui('redoc',cache_timeout=0)),
     #Endpoint para obtener el token - Funcion por POST
-    path('api/token/', TokenObtainPairView.as_view()),
+    #path('api/token/', TokenObtainPairView.as_view()),
+    path('api/token/', CustomTokenObtainPairView.as_view()),
     #Endpoint para refrescar el token 
-    path('api/token/refesh', TokenRefreshView.as_view()),
+    path('api/token/refresh/', TokenRefreshView.as_view()),
     path('admin/', admin.site.urls),
      # estoy asociando con un prefijo 'api/' a las rutas
      # definidas en el archivo url.py de la aplicacion 'api'

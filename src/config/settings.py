@@ -26,14 +26,23 @@ load_dotenv(os.path.join(BASE_DIR,'.env'))
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == 'True'
+ENV = os.getenv("ENV","development")
 
-ALLOWED_HOSTS = []
+#IP o dominio desde donde vamos a servir nuestra aplicacion
+#Cuando DEBUG=False es obligatorio completarlo
+#ALLOWED_HOSTS = ["midominio.com","127.0.0.1"]
+#Armar una lista en base al string leido del .env, separado por ","
+ALLOWED_HOST = os.getenv("ALLOWED_HOST","").split(",")
 
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:5501",
-]
+MY_CODE='un-secreto-mio'
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://127.0.0.1:5500",
+#     "http://127.0.0.1:5501",
+#     "http://localhost:5173",
+# ]
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS","").split(",")
 
 # Application definition
 
@@ -47,8 +56,11 @@ INSTALLED_APPS = [
     'drf_yasg',
     "corsheaders",
     'rest_framework',
+    'rest_framework_simplejwt',
     'api' #Registrar la aplicacion creada
 ]
+
+AUTH_USER_MODEL = 'api.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -150,6 +162,14 @@ REST_FRAMEWORK = {
         #Hace publicos todos los endpoints por defecto
         'rest_framework.permissions.AllowAny',
     ]
+}
+
+#CONFIGURACION JWT-TOKEN
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    #TOKEN DURE 30 minutos
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1), #'00:30:00
 }
 
 #CONFIGURACION DE SWAGGER
