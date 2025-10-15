@@ -9,6 +9,8 @@ router.register(r'estudiantes',views.EstudianteViewSet, basename='estudiantes')
 
 
 urlpatterns = [
+    path('search_users/',views.search_users),
+    path('search_users_safe/',views.search_users_safe),
     path('otra_ruta/', views.inicio),
     path('info/', views.api_info),
     path('cursos/', views.CursoAPIView.as_view()),

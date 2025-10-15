@@ -51,6 +51,37 @@ def api_info(request):
     }
     return JsonResponse(response)
 
+from django.db import connection
+
+@api_view(['GET'])
+def search_users(request):
+    query = request.GET.get('query','')
+    #sql = "SELECT id, username FROM api_customuser WHERE username LIKE '%test%'"
+    sql = "SELECT id, email FROM api_customuser WHERE email LIKE '%%%s%%';" % query
+    print(f"SQL: {sql}")
+    with connection.cursor() as c:
+        c.execute(sql) # Ejecutando la consulta sql en la base
+        rows = c.fetchall() # Extrar los datos de la consulta
+    
+    return Response(rows)
+
+from .models import CustomUser
+
+@api_view(['GET'])
+def search_users_safe(request):
+    query = request.GET.get('query','')
+
+    users = CustomUser.objects.filter(
+        Q(email__icontains=query) | Q(first_name__icontains=query)
+    ).values('id','email')
+
+    return Response({
+        'count': users.count(),
+        'result': list(users)
+    })
+
+
+
 # def api_cursos(request):
 #     cursos = {
 #         'nombre':'Python inicial',
@@ -131,7 +162,7 @@ class CursoAPIView(APIView):
 
         cursos = Curso.objects.filter(filtros) if filtros else Curso.objects.all()
         serializer = CursoReadSerializer(cursos, many = True)
-        return Response(serializer.data)
+        return Response(serializer.data,status=status.HTTP_200_OK)
     
     
     @swagger_auto_schema(
@@ -175,7 +206,7 @@ class CursoAPIView(APIView):
 class CursoDetalleAPIView(APIView):
 
     model = Curso
-    permission_classes = [IsAuthenticatedOrReadOnly, TienePermisoModelo]
+    permission_classes = [IsAuthenticated]
     
     def get(self,request,id_curso):
         #Ir a buscar en el modelo de Curso, el registro con pk=id_curso
