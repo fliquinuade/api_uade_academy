@@ -1,4 +1,7 @@
 from django.utils.deprecation import MiddlewareMixin
+import logging
+
+logger = logging.getLogger('api_uade')
 
 class SimpleLoggingMiddleware(MiddlewareMixin):
 
@@ -20,8 +23,8 @@ class SimpleLoggingMiddleware(MiddlewareMixin):
             #Se inicializa contador de visita para una ruta
             self.contadores[ruta] = 1
 
-        print(f"Petición interceptada: [{metodo}] - {ruta} - IP: {ip}")
-        print(f"{ruta} - Vistada {self.contadores[ruta]} veces")
+        logger.info(f"Petición interceptada: [{metodo}] - {ruta} - IP: {ip}")
+        logger.info(f"{ruta} - Vistada {self.contadores[ruta]} veces")
         
         return None
 
@@ -32,7 +35,9 @@ class SimpleLoggingMiddleware(MiddlewareMixin):
         status_code = response.status_code
         
         #Registro información de la respuesta
-        print(f"Respuesta capturada: {status_code}")
+        logger.info(f"Respuesta capturada: {status_code}")
+        if status_code == 429:
+            logger.warning(f"Respuesta con limite de tiempo")
 
         #Podria agregar información a la cabeceras de las respuesta
         response['X-API-Name'] = 'UADE Academy API'

@@ -28,6 +28,10 @@ from drf_yasg.openapi import Response as OpenAPIResponse
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 
+import logging
+
+logger = logging.getLogger('api_uade')
+
 class CustomTokenObtainPairView(TokenObtainPairView):
 
     serializer_class = CustomTokenObtainPairSerializer
@@ -92,7 +96,7 @@ def search_users_safe(request):
 class CursoAPIView(APIView):
 
     model = Curso
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     #Get hara referencia a poder gestionar peticiones HTTP del tipo GET
     @swagger_auto_schema(
@@ -105,9 +109,9 @@ class CursoAPIView(APIView):
         Aqui debera indicarle a la base que tiene que hacer
         SELECT * FROM api_cursos WHERE ;        
         """
-
+        logger.info(f'{request.method} Solicitud iniciada para listar cursos')
         cursos = Curso.objects.all()
-
+        logger.warning(f'Cursos: {cursos}')
         #cursos = Curso.objects.prefetch_related('modulos').all()
 
         # if modalidad_param and nombre_param:
