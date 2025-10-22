@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Curso, Modulo
-from .serializers import CursoSerializer, ModuloSerializer, CursoReadSerializer
+from .serializers import CursoSerializer, ModuloSerializer, CursoReadSerializer, ModuloWriteSerializer
 
 from django.db.models import Q
 
@@ -43,12 +43,40 @@ def inicio(request):
     mensaje = """<h1>AUDE ACADEMY</h1>"""
     return HttpResponse(mensaje)
 
+from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def api_info(request):
     """
         Información general de la API de AUDE Academy
     """
+    #Envio de correo en formato de texto plano
+    # send_mail(
+    #     subject='Email de bienvenida',
+    #     message='Una prueba de envio de email 📨',
+    #     from_email='jose.liquin@bue.edu.ar',
+    #     recipient_list=['jliquin@uade.edu.ar'],
+    #     fail_silently=False
+    # )
+
+    html = '<h1>Test envio email</h1><p>Estoy probando formato HTML</p>'
+    text= 'Test envio email\nEstoy probando formato HTML'
+
+    email = EmailMultiAlternatives(
+        subject='Envio email con HTML',
+        body=text,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=['jliquin@uade.edu.ar'],
+        cc=[],
+        bcc=[]
+    )
+
+    email.attach_alternative(html,"text/html")
+    email.send()
+
     response = {
         "message":"Bienvenido a la API de UADE Academy",
         "version": "1.0"
@@ -293,13 +321,13 @@ class ModuloAPIView(APIView):
         #SELECT m.nombre, m.duracion, c.nombre as nombre_curso FROM modulos m INNER JOIN cursos c ON c.id_curso = m.id_curso
         modulos = Modulo.objects.select_related('curso').all()
         #Si necesito filtar en base a un campo del modelo de curso
-        modulos_filtro = Modulo.objects.select_related('curso').filter(curso__modalidad__iexact='virtual',duracion__gte=3)
+        #modulos_filtro = Modulo.objects.select_related('curso').filter(curso__modalidad__iexact='virtual',duracion__gte=3)
 
-        serializer = ModuloSerializer(modulos_filtro, many=True)
+        serializer = ModuloSerializer(modulos, many=True)
         return Response(serializer.data)
     
     def post(self,request):        
-        serializer = ModuloSerializer(data=request.data)
+        serializer = ModuloWriteSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             respuesta = {

@@ -19,10 +19,25 @@ class ModuloSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Modulo
-        fields = ['nombre','duracion','curso']
+        fields = ['nombre','duracion','curso','ficha']
         depth = 1
 
+class ModuloWriteSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = Modulo
+        fields = '__all__'
+
+    def validate_ficha(self, file):
+        #Validar el tamaño del archivo 2MB
+        if file.size > 2 * 1024 * 1024:
+            raise serializers.ValidationError("El archivo debe tener 2MB como máximo")
+        #Validar el tipo de archivo - content_type
+        if file.content_type not in {"image/jpeg","image/png"}:
+            raise serializers.ValidationError("Solo JPG/PNG")        
+        return file
+
+    
 class CursoSerializer(serializers.ModelSerializer):
     """
         Serializado de curso para operaciones de crear/actualizar
