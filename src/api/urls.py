@@ -4,6 +4,7 @@ from . import views
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
+
 #Genera rutas de forma dinamica en base al ViewSet
 router.register(r'estudiantes',views.EstudianteViewSet, basename='estudiantes')
 

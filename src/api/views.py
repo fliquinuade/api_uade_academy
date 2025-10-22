@@ -61,7 +61,7 @@ def api_info(request):
     #     recipient_list=['jliquin@uade.edu.ar'],
     #     fail_silently=False
     # )
-
+    #Plantilla de email con html
     html = '<h1>Test envio email</h1><p>Estoy probando formato HTML</p>'
     text= 'Test envio email\nEstoy probando formato HTML'
 
