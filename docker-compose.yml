@@ -1,0 +1,74 @@
+services:
+  db_aude_academy:
+    #indico nombre del contenedor
+    container_name: mysql-uade-academy
+    #indico la imagene oficial de mysql 8.0
+    image: mysql:8.0
+
+    volumes:
+      #defino volumen y directorio compartido para el volumen de bd
+      - mysql_uade_db:/var/lib/mysql
+
+    ports:
+      #Asocio puerto 3307 del host con el 3306 del contenedor
+      - "3307:3306"
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+    restart: unless-stopped
+
+    networks:
+      - uade-network
+  
+  api:
+    container_name: api-uade-academy
+    
+    #Construcción de imagen personalizada para el proyecto
+    build:
+      context: .
+      dockerfile: ./deployments/Dockerfile
+    
+    ports:
+      - "8000:8000"
+    #Puedo especificar que archivo .env necesito cargar para las variables
+    #de entorno
+    env_file:
+      - ./src/.env
+
+    volumes:
+      - ./src:/app
+      - ./src/media:/app/media
+      - ./logs:/app/logs
+    
+    #Dependencias de contenedores, esperar a que el servicio db_aude_academy este iniciado
+    depends_on:
+      - db_aude_academy
+    
+    networks:
+      - uade-network
+    
+    #Comando para ejecutar el contenedor
+    #Tiene mayor importancia que el CMD del Dockerfile
+    command: >
+      sh -c "
+        echo 'Esperando a que MySQL este listo...' &&
+        sleep 10 &&
+        echo 'Ejecutando migraciones...' &&
+        python manage.py migrate &&
+        echo 'Iniciando servidor django...' &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+
+
+#Definicion de volumenes
+volumes:
+  mysql_uade_db:
+
+#Definición de redes
+networks:
+  uade-network:
+    driver: bridge
