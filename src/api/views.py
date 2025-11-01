@@ -62,20 +62,20 @@ def api_info(request):
     #     fail_silently=False
     # )
     #Plantilla de email con html
-    html = '<h1>Test envio email</h1><p>Estoy probando formato HTML</p>'
-    text= 'Test envio email\nEstoy probando formato HTML'
+    # html = '<h1>Test envio email</h1><p>Estoy probando formato HTML</p>'
+    # text= 'Test envio email\nEstoy probando formato HTML'
 
-    email = EmailMultiAlternatives(
-        subject='Envio email con HTML',
-        body=text,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=['jliquin@uade.edu.ar'],
-        cc=[],
-        bcc=[]
-    )
+    # email = EmailMultiAlternatives(
+    #     subject='Envio email con HTML',
+    #     body=text,
+    #     from_email=settings.DEFAULT_FROM_EMAIL,
+    #     to=['jliquin@uade.edu.ar'],
+    #     cc=[],
+    #     bcc=[]
+    # )
 
-    email.attach_alternative(html,"text/html")
-    email.send()
+    # email.attach_alternative(html,"text/html")
+    # email.send()
 
     response = {
         "message":"Bienvenido a la API de UADE Academy",
