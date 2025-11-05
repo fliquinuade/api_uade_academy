@@ -33,7 +33,7 @@ ENV = os.getenv("ENV","development")
 #Cuando DEBUG=False es obligatorio completarlo
 #ALLOWED_HOSTS = ["midominio.com","127.0.0.1"]
 #Armar una lista en base al string leido del .env, separado por ","
-ALLOWED_HOST = os.getenv("ALLOWED_HOST","").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS","").split(",")
 
 MY_CODE='un-secreto-mio'
 
