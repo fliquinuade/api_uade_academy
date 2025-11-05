@@ -270,8 +270,9 @@ LOGGING = {
 if ENV == 'production':
     #Falso porque Railway ya trabaja con un proxy reverso que fuerza HTTPS
     SECURE_SSL_REDIRECT=False 
+    #Le indicamos que considere la del proxy de Railway para hacer las redirecciones
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    
+
     SESSION_COOKIE_SECURE=True
     SECURE_HSTS_PRELOAD = True
     SECURE_HSTS_SECONDS = 31536000
@@ -299,3 +300,13 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "0") == "1"
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))  
+
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
