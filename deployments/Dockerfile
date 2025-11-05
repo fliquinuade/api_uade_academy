@@ -36,7 +36,7 @@ COPY deployments/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 #PASO 8
-RUN mkdir -p /app/media /app/logs /app/staticsfiles
+RUN mkdir -p /app/media /app/logs /app/staticfiles
 
 # #PASO 9
 RUN useradd --create-home --shell /bin/bash appuser \
