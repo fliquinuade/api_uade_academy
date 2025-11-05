@@ -147,7 +147,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
-STATICFILES_DIR = [ BASE_DIR / 'static']
+#STATICFILES_DIRS solo en desarrollo (si el directorio existe)
+static_dir = BASE_DIR / 'static'
+if static_dir.exists():
+    STATICFILES_DIRS = [static_dir]
+else:
+    STATICFILES_DIRS = []
+
 MEDIA_ROOT = BASE_DIR / 'media'
 
 STATIC_ROOT = BASE_DIR / 'staticsfiles'
@@ -207,7 +213,7 @@ SWAGGER_SETTINGS = {
 
 ####### CONFIGURACION DE LOGGING
 #Indico directorio de logs
-LOG_DIR = BASE_DIR.parent / 'logs'
+LOG_DIR = BASE_DIR / 'logs'
 #En caso de que no exista lo crea
 LOG_DIR.mkdir(exist_ok=True)
 
@@ -255,14 +261,15 @@ LOGGING = {
         #Logger por defecto de django para guardar trazabilidad de base de datos
         'django.db.backends':{
             'handlers':['file_db'],
-            'level':'DEBUG',
+            'level':'WARNING',
             'propagate': True
         }
     },
 }
 
 if ENV == 'production':
-    SECURE_SSL_REDIRECT=True
+    #Falso porque Railway ya trabaja con un proxy reverso que fuerza HTTPS
+    SECURE_SSL_REDIRECT=False 
     SESSION_COOKIE_SECURE=True
     CSRF_COOKIE_SECURE=True
 
