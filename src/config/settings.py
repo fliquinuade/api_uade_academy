@@ -64,6 +64,7 @@ AUTH_USER_MODEL = 'api.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ⚡ Debe ir después de SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
@@ -310,3 +311,8 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# Configuración adicional para WhiteNoise
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True if ENV == 'development' else False
+WHITENOISE_MANIFEST_STRICT = False  # Evita errores si falta algún archivo
