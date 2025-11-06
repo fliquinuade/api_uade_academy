@@ -79,7 +79,7 @@ def api_info(request):
 
     response = {
         "message":"Bienvenido a la API de UADE Academy",
-        "version": "1.0"
+        "version": "2.5"
     }
     return JsonResponse(response)
 
