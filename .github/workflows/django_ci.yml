@@ -1,0 +1,44 @@
+name: Django CI - Pruebas y Linter
+  # 1. EVENTO: Cuando se ejecuta este flujo de trabajo
+on:
+  push:
+    branches: [ main ] # Ejecutar solo cuando se hace push a la rama 'main'
+  pull_request:
+    branches: [ main ] # Ejecutar cuando se abre o actualiza una Pull Request contra 'main'
+
+# 2. JOBS: Los trabajos a ejecutar
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    # Ejecutar en la máquina virtual más reciente de Ubuntu
+    steps:
+    # Paso 1: Obtener el código
+    - name: Checkout del Código
+      uses: actions/checkout@v4
+    # Paso 2: Configurar el entorno de Python
+    # Ajustar a la versión que se use en el proyecto (ej. 3.11, 3.12)
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip' 
+    # Usar caché para acelerar la instalación de dependenciasç
+    
+    # Paso 3: Instalar dependencias
+    - name: Instalar Dependencias (requirements.txt)
+      run: pip install -r requirements.txt
+      # En un proyecto real, también se instalarían las librerías de pruebas como 'pytest'
+
+    # Paso 4: Ejecutar las Pruebas Unitarias de Django (CI)
+    - name: Ejecutar Pruebas de Django
+      run: python src/manage.py test
+      env:
+        # --- AÑADIR ESTAS VARIABLES DE ENTORNO ---
+        # Se requiere configurar una variable de entorno para la configuración de Django (necesaria para 'manage.py')
+        DJANGO_SETTINGS_MODULE: config.settings # Reemplazar 'mi_proyecto' por el nombre real
+        # Usamos SQLite para las pruebas de CI para evitar dependencias externas.
+        DATABASE_URL: sqlite:///db.sqlite3 
+        # O si tu settings.py no usa una variable URL, define los componentes individuales:
+        DB_ENGINE: django.db.backends.sqlite3
+        DB_NAME: test_db_ci
+        # ------------------------------
