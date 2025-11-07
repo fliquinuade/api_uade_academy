@@ -33,7 +33,7 @@ ENV = os.getenv("ENV","development")
 #Cuando DEBUG=False es obligatorio completarlo
 #ALLOWED_HOSTS = ["midominio.com","127.0.0.1"]
 #Armar una lista en base al string leido del .env, separado por ","
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS","").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS","127.0.0.1").split(",")
 
 MY_CODE='un-secreto-mio'
 
@@ -42,7 +42,7 @@ MY_CODE='un-secreto-mio'
 #     "http://127.0.0.1:5501",
 #     "http://localhost:5173",
 # ]
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS","").split(",")
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS","http://127.0.0.1:5500").split(",")
 
 # Application definition
 
