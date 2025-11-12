@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Curso, Estudiante, Modulo, Inscripcion
-from datetime import date
+from .models import Curso, Estudiante, Modulo, Inscripcion, Asistencia
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 import re
 
 def validar_caracteres_alfebeticos(value):
@@ -113,14 +114,39 @@ class EstudianteSerializer(serializers.ModelSerializer):
         fields = ['id','nombre','apellido','email','legajo','activo']
 
 class InscripcionSerializer(serializers.ModelSerializer):
+    """
+    Serializador para escritura (crear/actualizar) de inscripciones.
+    Incluye validaciones personalizadas para estudiantes activos y duplicados.
+    """
+    fecha_inscripcion = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
         model = Inscripcion
         fields = '__all__'
 
     def validate(self, data):
+        """
+        Valida que el estudiante esté activo y que no exista una inscripción duplicada.
+        Si no se proporciona fecha_inscripcion, se asigna la fecha actual en GMT-3.
+        
+        Args:
+            data: Diccionario con los datos de la inscripción
+            
+        Returns:
+            data: Datos validados
+            
+        Raises:
+            serializers.ValidationError: Si el estudiante está inactivo o la inscripción ya existe
+        """
         estudiante_data = data.get('estudiante')
         curso_data = data.get('curso')
+
+        # Si no se proporciona fecha_inscripcion, asignar la fecha actual en GMT-3
+        if not data.get('fecha_inscripcion'):
+            # Obtener la fecha actual en zona horaria GMT-3 (Argentina)
+            tz_argentina = ZoneInfo('America/Argentina/Buenos_Aires')
+            fecha_actual = datetime.now(tz_argentina).date()
+            data['fecha_inscripcion'] = fecha_actual
 
         #No hacer inscripciones a estudiantes inactivos
         if not estudiante_data.activo:
@@ -140,6 +166,65 @@ class InscripcionSerializer(serializers.ModelSerializer):
             )
         
         return data
+
+class InscripcionReadSerializer(serializers.ModelSerializer):
+    """
+    Serializador para lectura de inscripciones.
+    Incluye información anidada de estudiante y curso.
+    """
+    estudiante = EstudianteSerializer(read_only=True)
+    curso = CursoReadSerializer(read_only=True)
+
+    class Meta:
+        model = Inscripcion
+        fields = ['id', 'estudiante', 'curso', 'fecha_inscripcion']
+
+class AsistenciaSerializer(serializers.ModelSerializer):
+    """
+    Serializador para escritura (crear/actualizar) de asistencias.
+    """
+    
+    class Meta:
+        model = Asistencia
+        fields = '__all__'
+    
+    def validate_fecha(self, value):
+        """
+        Valida que la fecha no sea futura.
+        """
+        if value > date.today():
+            raise serializers.ValidationError('La fecha de asistencia no puede ser futura.')
+        return value
+    
+    def validate(self, data):
+        """
+        Valida que no exista una asistencia duplicada para la misma inscripción y fecha.
+        """
+        inscripcion_data = data.get('inscripcion')
+        fecha_data = data.get('fecha')
+        
+        existe_asistencia = Asistencia.objects.filter(
+            inscripcion=inscripcion_data,
+            fecha=fecha_data
+        ).exists()
+        
+        if existe_asistencia:
+            raise serializers.ValidationError(
+                'Ya existe un registro de asistencia para esta inscripción en la fecha indicada.'
+            )
+        
+        return data
+
+class AsistenciaReadSerializer(serializers.ModelSerializer):
+    """
+    Serializador para lectura de asistencias.
+    Incluye información anidada de inscripción.
+    """
+    inscripcion = InscripcionReadSerializer(read_only=True)
+
+    class Meta:
+        model = Asistencia
+        fields = ['id', 'inscripcion', 'fecha', 'presente']
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 

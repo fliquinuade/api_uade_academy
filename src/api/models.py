@@ -63,8 +63,21 @@ class Inscripcion(models.Model):
     estudiante = models.ForeignKey(Estudiante,on_delete=models.RESTRICT)
     #ONE-TO-MANY
     curso = models.ForeignKey(Curso, on_delete=models.RESTRICT)
-    fecha_inscripcion = models.DateField(auto_now_add=True) # Tome la fecha de creación por defecto
+    fecha_inscripcion = models.DateField(null=True, blank=True) # Puede ser proporcionada o se asigna automáticamente
 
+    def __str__(self):
+        return f"{self.estudiante.nombre} - {self.curso.name}"
+
+class Asistencia(models.Model):
+    """
+    Modelo para registrar la asistencia de estudiantes a cursos.
+    """
+    inscripcion = models.ForeignKey(Inscripcion, on_delete=models.CASCADE)
+    fecha = models.DateField()
+    presente = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.inscripcion} - {self.fecha} - {'Presente' if self.presente else 'Ausente'}"
 
 
 # class CustomUser(AbstractUser):

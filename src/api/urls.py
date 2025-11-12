@@ -17,7 +17,11 @@ urlpatterns = [
     path('cursos/', views.CursoAPIView.as_view()),
     path('cursos/<int:id_curso>/', views.CursoDetalleAPIView.as_view()),
     path('modulos/',views.ModuloAPIView.as_view()),
-    path('modulos/<int:id_modulo>/',views.ModuloDetalleAPIView.as_view())
+    path('modulos/<int:id_modulo>/',views.ModuloDetalleAPIView.as_view()),
+    path('inscripciones/', views.InscripcionAPIView.as_view()),
+    path('inscripciones/<int:id_inscripcion>/', views.InscripcionDetalleAPIView.as_view()),
+    path('asistencias/', views.AsistenciaAPIView.as_view()),
+    path('asistencias/<int:id_asistencia>/', views.AsistenciaDetalleAPIView.as_view()),
 ]
 
 #Sumamos al listado de rutas, las generadas automaticamente por el router

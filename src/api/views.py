@@ -409,4 +409,328 @@ class EstudianteViewSet(ModelViewSet):
         estudiante.activo = True
         estudiante.save()
         return Response({'status':'Estudiante activo'})
+
+
+from .models import Inscripcion
+from .serializers import InscripcionSerializer, InscripcionReadSerializer
+
+class InscripcionAPIView(APIView):
+    """
+    Vista para gestionar el listado y creación de inscripciones.
+    """
+    
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Obtiene la lista de todas las inscripciones",
+        responses={200: InscripcionReadSerializer(many=True)}
+    )
+    def get(self, request):
+        """
+        Obtiene todas las inscripciones con información detallada de estudiante y curso.
+        
+        Returns:
+            Response: Lista de inscripciones serializadas
+        """
+        inscripciones = Inscripcion.objects.select_related('estudiante', 'curso').all()
+        serializer = InscripcionReadSerializer(inscripciones, many=True)
+        return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        operation_description="Crea una nueva inscripción",
+        request_body=InscripcionSerializer,
+        responses={
+            201: InscripcionReadSerializer,
+            400: OpenAPIResponse(
+                description='Errores de validación',
+                examples={
+                    "application/json": {
+                        "error": "No se puede inscribir a un estudiante inactivo."
+                    }
+                }
+            )
+        }
+    )
+    def post(self, request):
+        """
+        Crea una nueva inscripción validando que el estudiante esté activo
+        y que no exista una inscripción duplicada.
+        
+        Args:
+            request: Objeto de la petición con los datos de la inscripción
+            
+        Returns:
+            Response: Inscripción creada o errores de validación
+        """
+        serializer = InscripcionSerializer(data=request.data)
+        if serializer.is_valid():
+            inscripcion = serializer.save()
+            # Retornar con el serializador de lectura para incluir datos completos
+            read_serializer = InscripcionReadSerializer(inscripcion)
+            return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class InscripcionDetalleAPIView(APIView):
+    """
+    Vista para gestionar el detalle, actualización y eliminación de una inscripción específica.
+    """
+    
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Obtiene el detalle de una inscripción específica",
+        responses={
+            200: InscripcionReadSerializer,
+            404: "Inscripción no encontrada"
+        }
+    )
+    def get(self, request, id_inscripcion):
+        """
+        Obtiene el detalle de una inscripción específica.
+        
+        Args:
+            request: Objeto de la petición
+            id_inscripcion: ID de la inscripción a consultar
+            
+        Returns:
+            Response: Datos de la inscripción o error 404
+        """
+        try:
+            inscripcion = Inscripcion.objects.select_related('estudiante', 'curso').get(pk=id_inscripcion)
+        except Inscripcion.DoesNotExist:
+            return Response(
+                {'error': 'Inscripción no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = InscripcionReadSerializer(inscripcion)
+        return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        operation_description="Actualiza una inscripción existente",
+        request_body=InscripcionSerializer,
+        responses={
+            200: InscripcionReadSerializer,
+            400: "Errores de validación",
+            404: "Inscripción no encontrada"
+        }
+    )
+    def put(self, request, id_inscripcion):
+        """
+        Actualiza una inscripción existente.
+        
+        Args:
+            request: Objeto de la petición con los datos actualizados
+            id_inscripcion: ID de la inscripción a actualizar
+            
+        Returns:
+            Response: Inscripción actualizada o errores de validación
+        """
+        try:
+            inscripcion = Inscripcion.objects.get(pk=id_inscripcion)
+        except Inscripcion.DoesNotExist:
+            return Response(
+                {'error': 'Inscripción no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = InscripcionSerializer(inscripcion, data=request.data)
+        if serializer.is_valid():
+            inscripcion_actualizada = serializer.save()
+            read_serializer = InscripcionReadSerializer(inscripcion_actualizada)
+            return Response(read_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @swagger_auto_schema(
+        operation_description="Elimina una inscripción específica",
+        responses={
+            204: "Inscripción eliminada exitosamente",
+            404: "Inscripción no encontrada"
+        }
+    )
+    def delete(self, request, id_inscripcion):
+        """
+        Elimina una inscripción específica.
+        
+        Args:
+            request: Objeto de la petición
+            id_inscripcion: ID de la inscripción a eliminar
+            
+        Returns:
+            Response: Confirmación de eliminación o error 404
+        """
+        try:
+            inscripcion = Inscripcion.objects.get(pk=id_inscripcion)
+            inscripcion.delete()
+            return Response(
+                {'message': 'Inscripción eliminada exitosamente'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except Inscripcion.DoesNotExist:
+            return Response(
+                {'error': 'Inscripción no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+from .models import Asistencia
+from .serializers import AsistenciaSerializer, AsistenciaReadSerializer
+
+class AsistenciaAPIView(APIView):
+    """
+    Vista para gestionar el listado y creación de asistencias.
+    """
+    
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Obtiene la lista de todas las asistencias",
+        responses={200: AsistenciaReadSerializer(many=True)}
+    )
+    def get(self, request):
+        """
+        Obtiene todas las asistencias con información detallada de inscripción.
+        
+        Returns:
+            Response: Lista de asistencias serializadas
+        """
+        asistencias = Asistencia.objects.select_related('inscripcion__estudiante', 'inscripcion__curso').all()
+        serializer = AsistenciaReadSerializer(asistencias, many=True)
+        return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        operation_description="Crea un nuevo registro de asistencia",
+        request_body=AsistenciaSerializer,
+        responses={
+            201: AsistenciaReadSerializer,
+            400: OpenAPIResponse(
+                description='Errores de validación',
+                examples={
+                    "application/json": {
+                        "error": "Ya existe un registro de asistencia para esta inscripción en la fecha indicada."
+                    }
+                }
+            )
+        }
+    )
+    def post(self, request):
+        """
+        Crea un nuevo registro de asistencia validando que no existan duplicados.
+        
+        Args:
+            request: Objeto de la petición con los datos de la asistencia
+            
+        Returns:
+            Response: Asistencia creada o errores de validación
+        """
+        serializer = AsistenciaSerializer(data=request.data)
+        if serializer.is_valid():
+            asistencia = serializer.save()
+            read_serializer = AsistenciaReadSerializer(asistencia)
+            return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AsistenciaDetalleAPIView(APIView):
+    """
+    Vista para gestionar el detalle, actualización y eliminación de una asistencia específica.
+    """
+    
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Obtiene el detalle de una asistencia específica",
+        responses={
+            200: AsistenciaReadSerializer,
+            404: "Asistencia no encontrada"
+        }
+    )
+    def get(self, request, id_asistencia):
+        """
+        Obtiene el detalle de una asistencia específica.
+        
+        Args:
+            request: Objeto de la petición
+            id_asistencia: ID de la asistencia a consultar
+            
+        Returns:
+            Response: Datos de la asistencia o error 404
+        """
+        try:
+            asistencia = Asistencia.objects.select_related('inscripcion__estudiante', 'inscripcion__curso').get(pk=id_asistencia)
+        except Asistencia.DoesNotExist:
+            return Response(
+                {'error': 'Asistencia no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = AsistenciaReadSerializer(asistencia)
+        return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        operation_description="Actualiza una asistencia existente",
+        request_body=AsistenciaSerializer,
+        responses={
+            200: AsistenciaReadSerializer,
+            400: "Errores de validación",
+            404: "Asistencia no encontrada"
+        }
+    )
+    def put(self, request, id_asistencia):
+        """
+        Actualiza una asistencia existente.
+        
+        Args:
+            request: Objeto de la petición con los datos actualizados
+            id_asistencia: ID de la asistencia a actualizar
+            
+        Returns:
+            Response: Asistencia actualizada o errores de validación
+        """
+        try:
+            asistencia = Asistencia.objects.get(pk=id_asistencia)
+        except Asistencia.DoesNotExist:
+            return Response(
+                {'error': 'Asistencia no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = AsistenciaSerializer(asistencia, data=request.data)
+        if serializer.is_valid():
+            asistencia_actualizada = serializer.save()
+            read_serializer = AsistenciaReadSerializer(asistencia_actualizada)
+            return Response(read_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @swagger_auto_schema(
+        operation_description="Elimina una asistencia específica",
+        responses={
+            204: "Asistencia eliminada exitosamente",
+            404: "Asistencia no encontrada"
+        }
+    )
+    def delete(self, request, id_asistencia):
+        """
+        Elimina una asistencia específica.
+        
+        Args:
+            request: Objeto de la petición
+            id_asistencia: ID de la asistencia a eliminar
+            
+        Returns:
+            Response: Confirmación de eliminación o error 404
+        """
+        try:
+            asistencia = Asistencia.objects.get(pk=id_asistencia)
+            asistencia.delete()
+            return Response(
+                {'message': 'Asistencia eliminada exitosamente'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except Asistencia.DoesNotExist:
+            return Response(
+                {'error': 'Asistencia no encontrada'},
+                status=status.HTTP_404_NOT_FOUND
+            )
     
